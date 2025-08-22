@@ -1,0 +1,8 @@
+export default function handler(req, res) {
+  res.status(200).json({ 
+    message: 'Sangdon API is running!',
+    endpoints: {
+      chat: '/api/chat'
+    }
+  });
+}
