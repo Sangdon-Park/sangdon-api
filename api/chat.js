@@ -70,6 +70,28 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Message too long (max 2000 characters)' });
     }
     
+    // Block prompt injection attempts
+    const injectionPatterns = [
+      /ignore.*previous.*instruction/i,
+      /forget.*everything/i,
+      /system.*prompt/i,
+      /show.*prompt/i,
+      /reveal.*instruction/i,
+      /당신은.*이제부터/i,
+      /넌.*이제.*아니야/i,
+      /역할.*바꿔/i,
+      /프롬프트.*알려/i,
+      /지시사항.*무시/i
+    ];
+    
+    if (injectionPatterns.some(pattern => pattern.test(message))) {
+      console.warn('Prompt injection attempt blocked:', message);
+      return res.status(200).json({ 
+        reply: '죄송합니다, 그 요청은 처리할 수 없습니다. 저에 대해 궁금한 점이 있으시면 편하게 물어보세요!',
+        remaining: MAX_REQUESTS_PER_DAY - rateLimitStore.get(ip).dailyCount
+      });
+    }
+    
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     
     if (!GEMINI_API_KEY) {
