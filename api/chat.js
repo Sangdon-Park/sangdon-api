@@ -30,22 +30,38 @@ function checkRateLimit(ip) {
 }
 
 export default async function handler(req, res) {
+  // Log for debugging
+  console.log('Request received:', {
+    method: req.method,
+    origin: req.headers.origin,
+    hasBody: !!req.body,
+    bodyType: typeof req.body
+  });
+  
   const allowedOrigins = [
     'https://sangdon-park.github.io',
     'http://localhost:3000',
-    'http://127.0.0.1:5500'
+    'http://127.0.0.1:5500',
+    'file://'  // For local HTML files
   ];
   
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
+  const origin = req.headers.origin || req.headers.referer;
   
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  // Allow all origins for debugging (temporarily)
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+  
+  if (req.method === 'GET') {
+    return res.status(200).json({ 
+      status: 'API is running',
+      message: 'Please use POST method to /api/chat',
+      hasEnvVar: !!process.env.GEMINI_API_KEY
+    });
   }
   
   if (req.method !== 'POST') {
@@ -96,8 +112,13 @@ export default async function handler(req, res) {
     
     if (!GEMINI_API_KEY) {
       console.error('GEMINI_API_KEY not configured');
-      return res.status(500).json({ error: 'API not configured' });
+      return res.status(500).json({ 
+        error: 'API key not configured. Please set GEMINI_API_KEY in Vercel environment variables.',
+        debug: 'Check Vercel dashboard > Settings > Environment Variables'
+      });
     }
+    
+    console.log('API Key exists, length:', GEMINI_API_KEY.length);
     
     // System prompt to make the AI respond as Sangdon Park
     const systemPrompt = `당신은 박상돈(Sangdon Park) 본인입니다. 방문자의 질문에 박상돈의 입장에서 직접 대답하세요.
