@@ -7,8 +7,15 @@
     "dev": "vercel dev",
     "deploy": "vercel --prod"
   },
-  "keywords": ["api", "chatbot", "gemini"],
+  "keywords": [
+    "api",
+    "chatbot",
+    "gemini"
+  ],
   "author": "Sangdon Park",
   "license": "MIT",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
 }
